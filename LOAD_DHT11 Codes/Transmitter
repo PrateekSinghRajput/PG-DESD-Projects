@@ -1,0 +1,91 @@
+#include <SPI.h>
+#include <mcp_can.h>
+#include "HX711.h"
+#include "DHT.h"
+
+// HX711 pins
+#define DOUT 4
+#define CLK 5
+
+// MCP2515
+#define CAN_CS 16
+
+// DHT11
+#define DHTPIN 15
+#define DHTTYPE DHT11
+
+// Reset Button
+#define RESET_BUTTON_PIN 14  // Connect button to GND and GPIO14
+
+HX711 scale;
+MCP_CAN CAN(CAN_CS);
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+
+  // Setup HX711
+  scale.begin(DOUT, CLK);
+  scale.set_scale(370);  // Your calibration factor
+  scale.tare();
+
+  // Setup DHT
+  dht.begin();
+
+  // Setup Reset Button
+  pinMode(RESET_BUTTON_PIN, INPUT_PULLUP);  // Pull-up, LOW when pressed
+
+  // Setup CAN
+  if (CAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) == CAN_OK) {
+    Serial.println("CAN BUS init OK!");
+  } else {
+    Serial.println("CAN BUS init FAILED!");
+    while (1);
+  }
+
+  CAN.setMode(MCP_NORMAL);
+}
+
+void loop() {
+  //  Check reset button
+  if (digitalRead(RESET_BUTTON_PIN) == LOW) {      //Reset button pressed! Re-taring scale...
+    scale.tare();  // Reset weight to 0
+    delay(1000);   // Debounce delay
+  }
+
+  //  Read weight
+  float weight = scale.get_units();
+  byte weightData[4];
+  memcpy(weightData, &weight, sizeof(weight));
+
+  if (CAN.sendMsgBuf(0x100, 0, 4, weightData) == CAN_OK) {
+    Serial.print("Sent weight: ");
+    Serial.println(weight);
+  } else {
+    Serial.println("Weight send failed");
+  }
+
+  //  Read DHT11
+  float temp = dht.readTemperature();
+  float hum = dht.readHumidity();
+
+  if (!isnan(temp) && !isnan(hum)) {
+    byte dhtData[8];
+    memcpy(dhtData, &temp, sizeof(temp));
+    memcpy(dhtData + 4, &hum, sizeof(hum));
+
+    if (CAN.sendMsgBuf(0x102, 0, 8, dhtData) == CAN_OK) {
+      Serial.print("Sent Temp: ");
+      Serial.print(temp);
+      Serial.print(" °C, Hum: ");
+      Serial.println(hum);
+    } else {
+      Serial.println("DHT11 send failed");
+    }
+  } else {
+    Serial.println("Failed to read DHT11");
+  }
+
+  delay(1000);  // Wait 1 second before next loop
+}
