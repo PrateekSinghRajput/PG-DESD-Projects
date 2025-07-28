@@ -1,0 +1,57 @@
+#include <SPI.h>
+#include <mcp_can.h>
+
+#define CAN_CS 16
+#define CAN_INT 17  
+
+MCP_CAN CAN(CAN_CS);
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+
+  if (CAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) == CAN_OK) {
+    Serial.println("CAN BUS init OK!");
+  } else {
+    Serial.println("CAN BUS init FAILED!");
+    while (1);
+  }
+
+  CAN.setMode(MCP_NORMAL);
+  pinMode(CAN_INT, INPUT);  // Optional
+}
+
+void loop() {
+  if (CAN_MSGAVAIL == CAN.checkReceive()) {
+    long unsigned int rxId;
+    byte len = 0;
+    byte rxBuf[8];
+
+    CAN.readMsgBuf(&rxId, &len, rxBuf);
+
+    if (rxId == 0x100 && len == 4) {
+      float weight;
+      memcpy(&weight, rxBuf, sizeof(weight));
+      Serial.print("Received weight: ");
+      Serial.print(weight, 2);
+      Serial.println(" g");
+    }
+
+    else if (rxId == 0x102 && len == 8) {
+      float temp, hum;
+      memcpy(&temp, rxBuf, sizeof(temp));
+      memcpy(&hum, rxBuf + 4, sizeof(hum));
+
+      Serial.print("Received Temp: ");
+      Serial.print(temp, 1);
+      Serial.print(" °C, Humidity: ");
+      Serial.print(hum, 1);
+      Serial.println(" %");
+    }
+
+    else {
+      Serial.print("Unknown CAN ID: 0x");
+      Serial.println(rxId, HEX);
+    }
+  }
+}
