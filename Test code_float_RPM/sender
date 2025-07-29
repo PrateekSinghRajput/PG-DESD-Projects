@@ -1,0 +1,56 @@
+#include <SPI.h>
+#include <mcp_can.h>
+
+#define CAN_CS 21
+#define FLOAT_SWITCH_PIN 17
+#define ENCODER_PIN 12
+
+MCP_CAN CAN(CAN_CS);
+
+volatile uint32_t encoderCount = 0;
+
+void IRAM_ATTR encoderISR() {
+  encoderCount++;
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+
+  pinMode(FLOAT_SWITCH_PIN, INPUT_PULLUP);
+  pinMode(ENCODER_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_PIN), encoderISR, RISING);
+
+  if (CAN.begin(MCP_ANY, CAN_500KBPS, MCP_16MHZ) == CAN_OK) {
+    Serial.println("Sender: CAN BUS init OK!");
+  } else {
+    Serial.println("Sender: CAN BUS init FAILED!");
+    while (1);
+  }
+
+  CAN.setMode(MCP_NORMAL);
+}
+
+void loop() {
+  uint8_t floatState = digitalRead(FLOAT_SWITCH_PIN);
+
+  noInterrupts();
+  uint32_t count = encoderCount;
+  encoderCount = 0;
+  interrupts();
+
+  byte data[5];
+  data[0] = floatState;
+  memcpy(&data[1], &count, 4);
+
+  if (CAN.sendMsgBuf(0x110, 0, 5, data) == CAN_OK) {
+    Serial.print("TX -> Float Switch: ");
+    Serial.print(floatState);
+    Serial.print(" | Encoder Count: ");
+    Serial.println(count);
+  } else {
+    Serial.println("Sender: Send Failed");
+  }
+
+  delay(1000);
+}
