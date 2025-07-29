@@ -1,0 +1,45 @@
+#include <SPI.h>
+#include <mcp_can.h>
+
+#define CAN_CS 16
+#define CAN_INT 17  // optional, not used in polling mode
+
+MCP_CAN CAN(CAN_CS);
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+
+  if (CAN.begin(MCP_ANY, CAN_500KBPS, MCP_16MHZ) == CAN_OK) {
+    Serial.println("Receiver: CAN BUS init OK!");
+  } else {
+    Serial.println("Receiver: CAN BUS init FAILED!");
+    while (1);
+  }
+
+  CAN.setMode(MCP_NORMAL);
+  pinMode(CAN_INT, INPUT);  // only if interrupt used
+}
+
+void loop() {
+  if (CAN_MSGAVAIL == CAN.checkReceive()) {
+    unsigned long canId;
+    byte len;
+    byte buf[8];
+
+    CAN.readMsgBuf(&canId, &len, buf);
+
+    if (canId == 0x110 && len == 5) {
+      uint8_t floatState = buf[0];
+      uint32_t encoderCount;
+      memcpy(&encoderCount, &buf[1], 4);
+
+      Serial.print("RX <- Float Switch: ");
+      Serial.print(floatState);
+      Serial.print(" | Encoder Count: ");
+      Serial.println(encoderCount);
+    } else {
+      Serial.println("Receiver: Wrong ID or Length");
+    }
+  }
+}
