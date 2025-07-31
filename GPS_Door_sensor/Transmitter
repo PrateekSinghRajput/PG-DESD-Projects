@@ -1,0 +1,107 @@
+#include <SPI.h>
+#include <mcp_can.h>
+#include <HardwareSerial.h>
+#include <TinyGPS++.h>
+
+// --- CAN Bus Pins ---
+#define CAN_CS 5  // Chip Select for MCP2515
+#define CAN_INT 2 // Interrupt pin (optional for TX)
+MCP_CAN CAN(CAN_CS);
+
+// --- GPS Pins ---
+#define GPS_RX_PIN 16
+#define GPS_TX_PIN 17
+HardwareSerial SerialGPS(2); // Using UART2
+TinyGPSPlus gps;
+
+// --- Door Sensor Pin ---
+#define DOOR_SENSOR_PIN 4
+bool lastDoorState = false; // false = CLOSED, true = OPEN
+const unsigned long DEBOUNCE_DELAY = 50;
+
+// --- CAN Message IDs ---
+const long unsigned int CAN_ID_GPS_LOCATION = 0x200;
+const long unsigned int CAN_ID_DOOR_STATUS = 0x201;
+
+// --- Local Data Storage for Serial Monitor ---
+float currentLat = 0.0;
+float currentLng = 0.0;
+String doorStateStr = "UNKNOWN";
+
+unsigned long lastPrintTime = 0;
+const unsigned long PRINT_INTERVAL = 1000; // Print every 1 second
+
+void setup() {
+  Serial.begin(115200);
+  delay(100);
+  Serial.println("--- Starting CAN Transmitter ---");
+
+  // Init CAN Bus
+  if (CAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) == CAN_OK) {
+    Serial.println("CAN Init OK!");
+  } else {
+    Serial.println("CAN Init FAILED!");
+    while (1);
+  }
+  CAN.setMode(MCP_NORMAL);
+  pinMode(CAN_INT, INPUT); // Set INT pin as input
+
+  // Init GPS UART
+  SerialGPS.begin(9600, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
+  Serial.println("GPS Init OK!");
+
+  // Init Door Sensor
+  pinMode(DOOR_SENSOR_PIN, INPUT_PULLUP);
+  lastDoorState = digitalRead(DOOR_SENSOR_PIN) == HIGH;
+  doorStateStr = lastDoorState ? "OPEN" : "CLOSED";
+  Serial.println("Door Sensor Init OK!");
+}
+
+void loop() {
+  // Read GPS data from module
+  while (SerialGPS.available() > 0) {
+    if (gps.encode(SerialGPS.read())) {
+      if (gps.location.isValid()) {
+        currentLat = gps.location.lat();
+        currentLng = gps.location.lng();
+        sendGPSData(currentLat, currentLng); // Send over CAN
+      }
+    }
+  }
+
+  // Read Door Sensor state
+  bool newDoorState = digitalRead(DOOR_SENSOR_PIN) == HIGH; // HIGH = OPEN, LOW = CLOSED
+
+  // If door state changed, update and send
+  if (newDoorState != lastDoorState) {
+    delay(DEBOUNCE_DELAY); // Debounce
+    if (newDoorState == (digitalRead(DOOR_SENSOR_PIN) == HIGH)) { // Confirm state
+      sendDoorStatus(newDoorState); // Send over CAN
+      lastDoorState = newDoorState;
+      doorStateStr = lastDoorState ? "OPEN" : "CLOSED";
+    }
+  }
+
+  // Print current data to Serial Monitor periodically
+  if (millis() - lastPrintTime >= PRINT_INTERVAL) {
+    Serial.print("Lat: "); Serial.print(currentLat, 6);
+    Serial.print(" | Lng: "); Serial.print(currentLng, 6);
+    Serial.print(" | Door: "); Serial.println(doorStateStr);
+    lastPrintTime = millis();
+  }
+}
+
+// Function to send GPS data via CAN
+void sendGPSData(float lat, float lng) {
+  byte data[8];
+  memcpy(&data[0], &lat, sizeof(float));
+  memcpy(&data[4], &lng, sizeof(float));
+  CAN.sendMsgBuf(CAN_ID_GPS_LOCATION, 0, 8, data);
+}
+
+// Function to send Door Status via CAN
+void sendDoorStatus(bool isOpen) {
+  byte data[1];
+  data[0] = isOpen ? 1 : 0; // 1 for OPEN, 0 for CLOSED
+  CAN.sendMsgBuf(CAN_ID_DOOR_STATUS, 0, 1, data);
+}
