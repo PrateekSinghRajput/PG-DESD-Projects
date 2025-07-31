@@ -4,8 +4,8 @@
 #include <TinyGPS++.h>
 
 // --- CAN Bus Pins ---
-#define CAN_CS 5  // Chip Select for MCP2515
-#define CAN_INT 2 // Interrupt pin (optional for TX)
+#define CAN_CS 5 
+#define CAN_INT 2 
 MCP_CAN CAN(CAN_CS);
 
 // --- GPS Pins ---
