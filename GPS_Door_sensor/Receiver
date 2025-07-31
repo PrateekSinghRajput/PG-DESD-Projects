@@ -1,0 +1,59 @@
+#include <SPI.h>
+#include <mcp_can.h>
+#include <HardwareSerial.h> 
+
+// --- CAN Bus Pins ---
+#define CAN_CS 5  
+#define CAN_INT 2 
+MCP_CAN CAN(CAN_CS);
+
+
+const long unsigned int CAN_ID_GPS_LOCATION = 0x200;
+const long unsigned int CAN_ID_DOOR_STATUS = 0x201;
+
+float receivedLat = 0.0;
+float receivedLng = 0.0;
+String receivedDoorStateStr = "UNKNOWN";
+
+void setup() {
+  Serial.begin(115200);
+  delay(100);
+  Serial.println("--- Starting CAN Receiver ---");
+
+  // Init CAN Bus
+  if (CAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) == CAN_OK) {
+    Serial.println("CAN Init OK!");
+  } else {
+    Serial.println("CAN Init FAILED!");
+    while (1); // Halt if CAN fails to initialize
+  }
+  CAN.setMode(MCP_NORMAL); 
+  pinMode(CAN_INT, INPUT); 
+}
+
+void loop() {
+  if (!digitalRead(CAN_INT) || CAN.checkReceive() == CAN_MSGAVAIL) { 
+    long unsigned int rxId;
+    unsigned char len = 0;
+    unsigned char rxBuf[8];
+
+    // Read message
+    if (CAN.readMsgBuf(&rxId, &len, rxBuf) == CAN_OK) {
+      if (rxId == CAN_ID_GPS_LOCATION) {
+        // Received GPS location data
+        memcpy(&receivedLat, &rxBuf[0], sizeof(float));
+        memcpy(&receivedLng, &rxBuf[4], sizeof(float));
+
+        Serial.print("Received GPS - Lat: "); Serial.print(receivedLat, 6);
+        Serial.print(" | Lng: "); Serial.println(receivedLng, 6);
+
+      } else if (rxId == CAN_ID_DOOR_STATUS) {
+        // Received Door Status data
+        bool isOpen = (rxBuf[0] == 1);
+        receivedDoorStateStr = isOpen ? "OPEN" : "CLOSED";
+
+        Serial.print("Received Door Status: "); Serial.println(receivedDoorStateStr);
+      }
+    }
+  }
+}
