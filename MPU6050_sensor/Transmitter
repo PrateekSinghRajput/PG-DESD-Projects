@@ -1,0 +1,61 @@
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_MPU6050.h>
+#include <SPI.h>
+#include "mcp_can.h"
+
+// Create objects
+Adafruit_MPU6050 mpu;
+MCP_CAN CAN(5);  // CS pin (adjust if different)
+
+// Setup function
+void setup() {
+  Serial.begin(115200);
+  Wire.begin();
+
+  // Initialize MPU6050
+  if (!mpu.begin()) {
+    Serial.println("MPU6050 not found!");
+    while (1);
+  }
+  Serial.println("MPU6050 ready");
+
+  // Initialize MCP2515 CAN
+  while (CAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) != CAN_OK) {
+    Serial.println("CAN init failed, retrying...");
+    delay(500);
+  }
+  CAN.setMode(MCP_NORMAL);
+  Serial.println("CAN ready");
+}
+
+// Loop
+void loop() {
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+
+  int16_t ax = (int16_t)(a.acceleration.x * 100);
+  int16_t ay = (int16_t)(a.acceleration.y * 100);
+  int16_t az = (int16_t)(a.acceleration.z * 100);
+
+  byte data[6];
+  data[0] = highByte(ax);
+  data[1] = lowByte(ax);
+  data[2] = highByte(ay);
+  data[3] = lowByte(ay);
+  data[4] = highByte(az);
+  data[5] = lowByte(az);
+
+  // Send via CAN
+  CAN.sendMsgBuf(0x70, 0, 6, data);
+
+  // Print like receiver
+  Serial.print("[SENT] ID: 0x70 | Accel X: ");
+  Serial.print(ax);
+  Serial.print(" | Y: ");
+  Serial.print(ay);
+  Serial.print(" | Z: ");
+  Serial.println(az);
+
+  delay(500);
+}
