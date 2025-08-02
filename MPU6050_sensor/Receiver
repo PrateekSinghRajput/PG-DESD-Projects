@@ -1,0 +1,50 @@
+#include <SPI.h>
+#include <mcp_can.h>
+
+#define CAN_CS 5
+#define CAN_INT 4
+
+MCP_CAN CAN(CAN_CS);
+
+volatile bool canInterrupt = false;
+
+void IRAM_ATTR handleCANInterrupt() {
+  canInterrupt = true;
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  if (CAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) == CAN_OK) {
+    Serial.println("CAN init OK!");
+  } else {
+    Serial.println("CAN init FAIL!");
+    while (1);
+  }
+
+  CAN.setMode(MCP_NORMAL);
+  pinMode(CAN_INT, INPUT);
+  attachInterrupt(digitalPinToInterrupt(CAN_INT), handleCANInterrupt, FALLING);
+}
+
+void loop() {
+  if (canInterrupt) {
+    canInterrupt = false;
+
+    unsigned long rxId;
+    byte len;
+    byte buf[8];
+
+    CAN.readMsgBuf(&rxId, &len, buf);  // ✅ Correct function call
+
+    int16_t ax = (buf[0] << 8) | buf[1];
+    int16_t ay = (buf[2] << 8) | buf[3];
+    int16_t az = (buf[4] << 8) | buf[5];
+
+    Serial.print("[RECV] ID: 0x");
+    Serial.print(rxId, HEX);
+    Serial.print(" | Accel X: "); Serial.print(ax);
+    Serial.print(" | Y: "); Serial.print(ay);
+    Serial.print(" | Z: "); Serial.println(az);
+  }
+}
