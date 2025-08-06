@@ -100,7 +100,7 @@ This project designs and implements a robust embedded system that acquires data 
 
 ---
 
-# Cost Bill for IoT Project (Indian Rupees - INR)
+# Bill (Indian Rupees - INR)
 
 | Component                   | Quantity | Unit Cost (INR) | Total Cost (INR) |
 |----------------------------|----------|-----------------|------------------|
