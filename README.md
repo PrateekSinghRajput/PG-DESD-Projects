@@ -115,7 +115,7 @@ This project designs and implements a robust embedded system that acquires data 
 | TFT ST7735 Display 1.5 inch| 1        | 450             | 450              |
 | GSM Module                 | 1        | 640             | 640              |
 | Miscellaneous (wires, PCB, connectors) | 1 | 500          | 500              |
-| **Total Estimated Cost**   |          |                 | **5,130**        |
+| **Total Estimated Cost**   |     15     |                 | **5,130**        |
 
 ---
 
