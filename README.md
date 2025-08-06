@@ -117,8 +117,6 @@ This project designs and implements a robust embedded system that acquires data 
 | Miscellaneous (wires, PCB, connectors) | 1 | 500          | 500              |
 | **Total Estimated Cost**   |          |                 | **5,130**        |
 
-*Note: The prices are approximate and may vary based on vendor and location.*
-
 ---
 
 ## 🚀 Notes 
