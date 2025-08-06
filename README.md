@@ -3,6 +3,8 @@
 
 A comprehensive system for **real-time data acquisition and analysis** of engine performance and vehicle load in heavy vehicles, leveraging the **Controller Area Network (CAN) protocol**. This system continuously monitors critical vehicle parameters, ensuring optimized operation, safety, and proactive maintenance.
 
+<img width="1401" height="415" alt="Problem" src="https://github.com/user-attachments/assets/e771b57c-4916-410b-b4cb-db5d9df92078" />
+
 
 ## 📋 Overview
 
