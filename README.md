@@ -8,6 +8,9 @@ A comprehensive system for **real-time data acquisition and analysis** of engine
 
 This project designs and implements a robust embedded system that acquires data from various sensors connected over the CAN bus, processes it in real-time, and provides actionable insights via onboard displays and remote fleet management platforms.
 
+<img width="1266" height="757" alt="1_Block_Diagram" src="https://github.com/user-attachments/assets/b53324b8-89d0-40f2-b118-6e109c941168" />
+
+
 ---
 
 ## ⚙️ Key Functionalities
