@@ -20,10 +20,8 @@ This project designs and implements a robust embedded system that acquires data 
 ### 1. 🔥 Real-Time Engine Performance Monitoring
 - Continuous acquisition of engine parameters:  
   - Engine temperature  
-  - RPM (Revolutions Per Minute)  
   - Fuel consumption  
-  - Throttle position  
-  - Oil pressure  
+  - Oil Level
 - Data processing to evaluate engine health and efficiency.
 
 ### 2. ⚖️ Vehicle Load Measurement and Analysis
@@ -31,18 +29,12 @@ This project designs and implements a robust embedded system that acquires data 
 - Load data transmitted via CAN to the central ECU.  
 - Helps prevent overloading and enhances fuel efficiency.
 
-### 3. 🛠 Leak Detection & Pneumatic System Monitoring
-- Pressure sensors monitor pneumatic brake and suspension circuits.  
-- Algorithms detect pressure deviations indicating leaks or faults.  
-- Early leak detection improves safety and reduces damage costs.
-
-### 4. 🔌 Connection & Condition Monitoring
+### 3. 🔌 Connection & Condition Monitoring
 - Continuous monitoring of sensor and electrical connection status.  
 - Fault detection for loose connections, sensor failures, or wiring damage.  
 - Diagnostic Trouble Codes (DTCs) read and transmitted for maintenance.
 
-### 5. ⚠️ Damage & Fault Alerts
-- Vibration sensors detect mechanical damage or abnormal vibrations.  
+### 4. ⚠️ Damage & Fault Alerts
 - Alarms/warnings displayed on dashboard and sent via GSM to fleet managers.  
 - Enables proactive maintenance, minimizing downtime.
 
@@ -59,51 +51,48 @@ This project designs and implements a robust embedded system that acquires data 
 
 ## 🧰 Software Tools & Technologies
 
-- **Embedded C/C++** for microcontroller firmware development  
-- **CAN Protocol Stack** libraries (STM32 HAL CAN)  
-- **Real-Time Operating System (RTOS)** (optional for task scheduling)  
-- **Data Analysis Algorithms** implemented on ECU or cloud platform   
-- **GSM Module Firmware** for communication protocols (GPRS, MQTT)  
+- **Embedded C/C++** for microcontroller firmware development.  
+- **CAN Protocol Stack** libraries (mcp2515.h CAN).  
+- **Real-Time Operating System (RTOS).
+- **Data Analysis Algorithms** implemented on ECU or cloud platform (Thingspeak). 
+- **GSM Module Firmware** for communication protocols (GPRS, HTTP).  
 
 
 ### Step 1: Hardware Setup
-- Select a microcontroller with built-in CAN controller (e.g., STM32, PIC18F)  
-- Connect CAN transceiver (e.g., MCP2551) to microcontroller CAN pins  
-- Interface sensors (temperature, RPM, load, pressure, vibration) to MCU ADC or digital inputs  
-- Set up display unit (LCD/OLED) connected via SPI/I2C or parallel interface  
-- Integrate GSM/telematics module for remote communication  
+- RISC (ESP32) microcontroller with MCP2515 CAN Module.
+- Interface sensors (temperature, load, Oil Level, Door Status) to MCU. 
+- Set up display unit (1.8 inch TFT LCD Module) connected via SPI. 
+- Integrate GSM module for remote communication.
 
 ### Step 2: Firmware Development
-- Initialize CAN controller and configure baud rate (typically 500 kbps)  
-- Develop sensor data acquisition routines with proper sampling rates  
-- Implement CAN message formatting and transmission for sensor data  
-- Write algorithms for engine health assessment, load analysis, and leak detection  
-- Implement fault detection and DTC generation  
-- Program dashboard display updates with real-time data and alerts  
-- Integrate GSM module communication routines for remote data upload  
+- Initialize CAN controller and configure baud rate (typically 500 kbps).  
+- Develop sensor data acquisition routines with proper sampling rates.  
+- Implement CAN message formatting and transmission for sensor data. 
+- Write algorithms for engine health temp, load analysis. 
+- Program dashboard display updates with real-time data and alerts.  
+- Integrate GSM module communication routines for remote data upload. 
 
 ### Step 3: Testing & Calibration
-- Calibrate sensors for accurate measurement (temperature, load, pressure)  
-- Test CAN communication reliability and error handling  
-- Validate real-time data processing and alert generation  
-- Simulate fault conditions to verify diagnostics and alarms  
-- Test remote data transmission and fleet management integration  
+- Calibrate sensors for accurate measurement (temperature, load, oil level, door status).  
+- Test CAN communication reliability and error handling.  
+- Validate real-time data processing and alert generation.  
+- Simulate fault conditions to verify diagnostics and alarms.  
 
 ### Step 4: Deployment & Maintenance
-- Install system in heavy vehicle with secure sensor mounting and wiring  
-- Monitor system performance during operation  
-- Use fleet management software for continuous vehicle health insights  
-- Perform maintenance based on alerts and diagnostic codes  
+- Install system in heavy vehicle with secure sensor mounting and wiring.  
+- Monitor system performance during operation.  
+- Use fleet management software for continuous vehicle health insights.  
+- Perform maintenance based on alerts and diagnostic codes.  
 
 ---
 
 ## 🚀 Benefits of the System
 
-- Enhanced vehicle safety through early fault detection  
-- Optimized fuel consumption and load management  
-- Reduced downtime with proactive maintenance alerts  
-- Improved fleet management with real-time remote monitoring  
-- Reliable, high-speed communication via CAN protocol  
+- Enhanced vehicle safety through early fault detection. 
+- Optimized fuel consumption and load management.  
+- Reduced downtime with proactive maintenance alerts.  
+- Improved fleet management with real-time remote monitoring.  
+- Reliable, high-speed communication via CAN protocol.  
 - Fleet managers receive real-time insights into vehicle health, driver behavior, fuel efficiency, and compliance.
 - Remote diagnostics reduce the need for physical inspections and improve operational efficiency.
   
