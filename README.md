@@ -106,6 +106,7 @@ This project designs and implements a robust embedded system that acquires data 
 - Reliable, high-speed communication via CAN protocol  
 - Fleet managers receive real-time insights into vehicle health, driver behavior, fuel efficiency, and compliance.
 - Remote diagnostics reduce the need for physical inspections and improve operational efficiency.
+  
 ![7_Working_photo](https://github.com/user-attachments/assets/0a4e40ea-c534-47cd-9d51-c2ed9c47ac1f)
 
   
