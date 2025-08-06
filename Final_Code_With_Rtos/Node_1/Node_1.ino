@@ -1,95 +1,102 @@
+#include <Arduino.h>
 #include <SPI.h>
 #include <mcp2515.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include "max6675.h"
 
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
+// RTOS includes
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
+// Hardware definitions
 MCP2515 mcp2515(5);
-#define CAN_NODE_1_ID 0x036
-
-int thermoDO = 12;
-int thermoCS = 15;
-int thermoCLK = 14;
-MAX6675 thermocouple(thermoCLK, thermoCS, thermoDO);
-
 LiquidCrystal_I2C lcd(0x27, 16, 2);
-
+MAX6675 thermocouple(14, 15, 12);  // CLK, CS, DO
 #define WATER_SENSOR_PIN 4
 #define RED_LED_PIN 27
 #define GREEN_LED_PIN 26
 
-volatile float temp_C = 0.0;
-volatile bool waterDetected = false;
+// CAN bus definitions
+#define CAN_NODE_1_ID 0x036
+#define CAN_SEND_INTERVAL_MS 500
 
-void sensorTask(void *pvParameters) {
+// Shared variables
+float temperature_C = 0.0;
+bool waterDetected = false;
+
+// Task handles
+TaskHandle_t readSensorTaskHandle = NULL;
+TaskHandle_t lcdUpdateTaskHandle = NULL;
+TaskHandle_t canSendTaskHandle = NULL;
+
+
+// Task 1: Read Sensor Data
+// Reads the temperature from the thermocouple and the water sensor state.
+
+void readSensorTask(void* pvParameters) {
   for (;;) {
-    temp_C = thermocouple.readCelsius();
+    temperature_C = thermocouple.readCelsius();
     waterDetected = (digitalRead(WATER_SENSOR_PIN) == LOW);
-    vTaskDelay(pdMS_TO_TICKS(1000));  // 1 second delay
+    Serial.printf("Sensor Reading: Temp=%.2f°C, Water=%s\n", temperature_C, waterDetected ? "Empty" : "Full");
+    vTaskDelay(pdMS_TO_TICKS(1000));  // Read sensors every 1000 ms
   }
 }
 
-void displayTask(void *pvParameters) {
+// Task 2: Update LCD Display
+// Updates the LCD with the latest sensor data.
+
+void lcdUpdateTask(void* pvParameters) {
+  lcd.init();
+  lcd.backlight();
   for (;;) {
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Engine T:");
-    lcd.print(temp_C, 2);
+    lcd.print(temperature_C, 2);
     lcd.print((char)223);
     lcd.print("C");
-
     lcd.setCursor(0, 1);
     lcd.print("Oil:");
     lcd.print(waterDetected ? "Empty " : "Full ");
-
-    vTaskDelay(pdMS_TO_TICKS(1000));  // 1 second delay
+    vTaskDelay(pdMS_TO_TICKS(500));  // Update LCD every 500 ms
   }
 }
 
-void canSendTask(void *pvParameters) {
+
+// Task 3: Send CAN Messages
+// Prepares and sends CAN messages containing sensor data.
+void canSendTask(void* pvParameters) {
   struct can_frame canMsg;
   canMsg.can_id = CAN_NODE_1_ID;
   canMsg.can_dlc = 3;
 
   for (;;) {
-    int16_t tempSend = (int16_t)(temp_C * 100);
+    int16_t tempSend = (int16_t)(temperature_C * 100);
     canMsg.data[0] = (tempSend >> 8) & 0xFF;
     canMsg.data[1] = tempSend & 0xFF;
     canMsg.data[2] = waterDetected ? 1 : 0;
 
     if (mcp2515.sendMessage(&canMsg) == MCP2515::ERROR_OK) {
-      Serial.print("Sent CAN: Temp=");
-      Serial.print(temp_C, 2);
-      Serial.print(" C, Water=");
-      Serial.println(waterDetected ? "YES" : "NO");
+      Serial.println("CAN message sent successfully.");
+      digitalWrite(GREEN_LED_PIN, HIGH);
+      digitalWrite(RED_LED_PIN, LOW);
     } else {
-      Serial.println("Failed to send CAN message");
+      Serial.println("Failed to send CAN message.");
       digitalWrite(GREEN_LED_PIN, LOW);
       digitalWrite(RED_LED_PIN, HIGH);
     }
-
-    vTaskDelay(pdMS_TO_TICKS(500));  // 500 ms interval
+    vTaskDelay(pdMS_TO_TICKS(CAN_SEND_INTERVAL_MS));
   }
 }
 
+
 void setup() {
   Serial.begin(115200);
-
   pinMode(RED_LED_PIN, OUTPUT);
   pinMode(GREEN_LED_PIN, OUTPUT);
-  digitalWrite(RED_LED_PIN, LOW);
+  digitalWrite(RED_LED_PIN, HIGH);  // Assume error state initially
   digitalWrite(GREEN_LED_PIN, LOW);
-
-  lcd.init();
-  lcd.backlight();
-  lcd.setCursor(0, 0);
-  lcd.print("........");
-  lcd.setCursor(0, 1);
-  lcd.print("........");
-  delay(2000);
 
   pinMode(WATER_SENSOR_PIN, INPUT_PULLUP);
 
@@ -98,19 +105,41 @@ void setup() {
   mcp2515.setBitrate(CAN_500KBPS, MCP_8MHZ);
   mcp2515.setNormalMode();
 
-  digitalWrite(GREEN_LED_PIN, HIGH);  // Assuming connected
-  Serial.println("CAN module assumed connected - GREEN LED ON");
-  Serial.println("Node 1 started");
+  Serial.println("CAN Node 1 started - RTOS version");
+  Serial.println("Creating RTOS tasks...");
+  digitalWrite(RED_LED_PIN, LOW);
+  digitalWrite(GREEN_LED_PIN, HIGH);
 
   // Create tasks
-  xTaskCreate(sensorTask, "Sensor Task", 2048, NULL, 2, NULL);
-  xTaskCreate(displayTask, "Display Task", 2048, NULL, 1, NULL);
-  xTaskCreate(canSendTask, "CAN Send Task", 2048, NULL, 2, NULL);
+  xTaskCreate(
+    readSensorTask,        // Task function
+    "Read Sensor Task",    // Name of the task
+    2048,                  // Stack size in words
+    NULL,                  // Parameter to pass to the task
+    1,                     // Priority of the task
+    &readSensorTaskHandle  // Task handle
+  );
 
-  // Start scheduler
-  vTaskStartScheduler();
+  xTaskCreate(
+    lcdUpdateTask,        // Task function
+    "LCD Update Task",    // Name of the task
+    2048,                 // Stack size
+    NULL,                 // Parameter
+    1,                    // Priority
+    &lcdUpdateTaskHandle  // Task handle
+  );
+
+  xTaskCreate(
+    canSendTask,        // Task function
+    "CAN Send Task",    // Name of the task
+    2048,               // Stack size
+    NULL,               // Parameter
+    1,                  // Priority
+    &canSendTaskHandle  // Task handle
+  );
 }
 
+
 void loop() {
-  // Empty - tasks handle everything now
+  vTaskDelay(pdMS_TO_TICKS(1000));  // The loop() can be an idle task
 }
