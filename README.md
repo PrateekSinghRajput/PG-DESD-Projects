@@ -99,6 +99,28 @@ This project designs and implements a robust embedded system that acquires data 
 ![7_Working_photo](https://github.com/user-attachments/assets/0a4e40ea-c534-47cd-9d51-c2ed9c47ac1f)
 
 ---
+
+# Cost Bill for IoT Project (Indian Rupees - INR)
+
+| Component                   | Quantity | Unit Cost (INR) | Total Cost (INR) |
+|----------------------------|----------|-----------------|------------------|
+| ESP32 Module               | 3        | 400             | 1,200            |
+| 16x2 LCD Display           | 1        | 150             | 150              |
+| MAX6675 (Temp Sensor)      | 1        | 390             | 390              |
+| Float Sensor               | 1        | 300             | 300              |
+| CAN Module                 | 3        | 280             | 840              |
+| Load Sensor                | 1        | 350             | 350              |
+| Door Sensor                | 1        | 140             | 140              |
+| OLED Display               | 1        | 230             | 230              |
+| TFT ST7735 Display 1.5 inch| 1        | 450             | 450              |
+| GSM Module                 | 1        | 640             | 640              |
+| Miscellaneous (wires, PCB, connectors) | 1 | 500          | 500              |
+| **Total Estimated Cost**   |          |                 | **5,130**        |
+
+*Note: The prices are approximate and may vary based on vendor and location.*
+
+---
+
 ## 🚀 Notes 
 
 ---
