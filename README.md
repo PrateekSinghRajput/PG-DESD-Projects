@@ -101,21 +101,45 @@ This project designs and implements a robust embedded system that acquires data 
 ---
 ## 🚀 Notes 
 
-TFT Display :- 
-SPI is much faster than I2C SPI can operate at tens of MHz, while I2C is usually limited to 400 kHz or up to 1 MHz in some newer devices. 
-This higher speed allows faster screen updates, which is important for responsive and smooth display performance on graphical displays like TFT LCDs.
-TFT LCD displays require continuous and relatively high bandwidth data transfer for updating pixels on the screen. 
-SPI supports full-duplex communication and separate lines for data input and output, enabling faster, more efficient transfers compared to the single bidirectional data line of I2C.
-SPI uses multiple lines (clock, MOSI, MISO, chip select) which increases pin count but avoids the complexity of start/stop conditions, addressing, and clock stretching that are part of I2C. 
-This makes SPI simpler to implement for high-speed data transfer.
+---
 
-MCP2515 CAN Module :- 
-Overall, the MCP2515 module is a cost-effective and efficient solution to add CAN bus capability to microcontrollers with SPI interface, supporting up to 112 nodes on the bus and 1 Mbps data rate, complying with the ISO-11898 standard requirements.
-Data Frames Supported Both standard (11-bit identifier) and extended (29-bit identifier) CAN frames, including data and remote frames with 0 to 8 data bytes.
-Clock Uses an 8 MHz external crystal oscillator and provides a clock output pin with a programmable prescaler.
+## 1.8 inch TFT LCD Display
+ 
+- **SPI Advantages over I2C for TFT:**
+  - Supports high-speed communication (tens of MHz) versus I2C's max around 400 kHz to 1 MHz.
+  - Enables fast screen refresh necessary for smooth graphics.
+  - Full-duplex communication and separate data lines allow efficient data transfer.
+  - Simpler timing protocol without I2C start/stop conditions or clock stretching.
+- **Reasons for Choosing TFT over OLED:**
+  - 128x160 pixels, 18-bit color depth (262,144 colors) 
+  - Lower cost and better availability.
+  - Greater resistance to screen burn-in and longer lifespan.
+  - Higher brightness and better visibility in sunlight.
+  - Compatible with common microcontrollers due to onboard driver chips (e.g., ST7735).
+  - Stable color performance over long-term use.
 
-The MCP2515 handles the CAN protocol – preparing and interpreting CAN messages, controlling bus access, error checking, and message filtering.
-The TJA1050 handles the physical signaling on the CAN bus wires, transmitting and receiving differential signals.
-The MCP2515 sends transmit data and control signals to the TJA1050, which then converts to the CAN_H and CAN_L signals on the bus.
-Incoming CAN bus signals received by TJA1050 are converted to logic signals and sent back to MCP2515 for processing.
-Interrupts from MCP2515 alert the MCU to message events or errors.
+---
+
+## MCP2515 CAN Bus Module
+
+- **Purpose:** Add CAN bus capability to microcontrollers via SPI interface.  
+- **CAN Bus Support:** Up to 112 nodes on the bus.  
+- **Data Rate:** Up to 1 Mbps, compliant with ISO-11898 standard.  
+- **Supported Frames:**
+  - Standard frames (11-bit identifier).
+  - Extended frames (29-bit identifier).
+  - Both data frames and remote frames with payload from 0 to 8 bytes.  
+- **Clock Source:** 8 MHz external crystal oscillator with programmable prescaler and clock output pin.  
+
+### Components and Functionality:
+
+- **MCP2515 Controller:**  
+  - Implements CAN protocol handling: message preparation, transmission, reception, filtering, and error checking.  
+  - Manages access to CAN bus.  
+  - Sends interrupts to MCU on events (message received/transmitted/errors).
+
+- **TJA1050 Transceiver:**  
+  - Handles physical signaling on the CAN bus wires (CAN_H and CAN_L).  
+  - Converts logic signals from MCP2515 into differential CAN signals and vice versa.
+ 
+    ---
