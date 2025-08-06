@@ -3,7 +3,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <Arduino_FreeRTOS.h> // or other FreeRTOS include for your platform
+#include <Arduino_FreeRTOS.h> 
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
