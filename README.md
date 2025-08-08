@@ -12,6 +12,7 @@ This project designs and implements a robust embedded system that acquires data 
 
 <img width="1266" height="757" alt="1_Block_Diagram" src="https://github.com/user-attachments/assets/b53324b8-89d0-40f2-b118-6e109c941168" />
 
+   ![Block_Diagram](https://github.com/user-attachments/assets/c7bf307c-c6b5-4a83-8241-b745e3180d4c)
 
 ---
 
@@ -23,7 +24,6 @@ This project designs and implements a robust embedded system that acquires data 
   - Fuel consumption  
   - Oil Level
 - Data processing to evaluate engine health and efficiency.
-  ![Block_Diagram](https://github.com/user-attachments/assets/c7bf307c-c6b5-4a83-8241-b745e3180d4c)
 
 ### 2. ⚖️ Vehicle Load Measurement and Analysis
 - Load sensors/strain gauges measure chassis weight/stress.  
